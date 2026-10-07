@@ -57,7 +57,7 @@ export default function CartScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 24 }]}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}><Text style={styles.backText}>‹ Back</Text></Pressable>
+        <Text style={styles.wordmark}>HEFA</Text>
         <Text style={styles.title}>Bag{totalItems > 0 ? ` (${totalItems})` : ''}</Text>
       </View>
       <ErrorNotice message={error} />
@@ -88,7 +88,7 @@ export default function CartScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.cream, paddingHorizontal: 24 },
   header: { gap: 4, marginBottom: 8 },
-  backText: { fontFamily: fonts.sansMedium, fontSize: 13, color: colors.burntOrange },
+  wordmark: { fontFamily: fonts.serif, fontSize: 16, color: colors.ink, letterSpacing: 0.35 },
   title: { fontFamily: fonts.serif, fontSize: 28, color: colors.ink },
   list: { flex: 1 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },

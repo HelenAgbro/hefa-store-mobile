@@ -12,8 +12,6 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ProductCard } from '@/components/ProductCard';
-import { useAuth } from '@/context/AuthContext';
-import { useCart } from '@/context/CartContext';
 import { getFeaturedProducts, isUsingDatabase } from '@/lib/products';
 import type { Product } from '@/lib/types';
 import { colors, fonts, radii, spacing } from '@/theme';
@@ -28,8 +26,6 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const router = useRouter();
-  const { user, signOut } = useAuth();
-  const { totalItems } = useCart();
 
   /**
    * Roughly 58% of the screen width, so the next card peeks in at the edge and
@@ -73,12 +69,6 @@ export default function HomeScreen() {
     [router],
   );
 
-  // Wrapped so the row can await it without an inline async onPress, which
-  // would be a new function on every render.
-  const handleSignOut = useCallback(async () => {
-    await signOut();
-  }, [signOut]);
-
   return (
     <ScrollView
       style={styles.screen}
@@ -105,15 +95,6 @@ export default function HomeScreen() {
             style={styles.heroPrimary}
           >
             <Text style={styles.heroPrimaryText}>Shop the collection</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => router.push('/cart')}
-            accessibilityRole="button"
-            style={styles.heroSecondary}
-          >
-            <Text style={styles.heroSecondaryText}>
-              {totalItems > 0 ? `Bag (${totalItems})` : 'Bag'}
-            </Text>
           </Pressable>
         </View>
       </View>
@@ -150,40 +131,6 @@ export default function HomeScreen() {
               />
             ))}
           </ScrollView>
-        )}
-      </View>
-
-      {/**
-       * The account row. Signed out it offers sign-in; signed in it shows who
-       * is signed in and offers the way out. It reads the shared auth state
-       * rather than asking Supabase itself, so it can never disagree with the
-       * rest of the app.
-       */}
-      <View style={styles.account}>
-        {user ? (
-          <>
-            <Text style={styles.accountName}>
-              Signed in as {user.user_metadata?.first_name ?? user.email}
-            </Text>
-            <Pressable
-              onPress={handleSignOut}
-              accessibilityRole="button"
-              style={styles.accountAction}
-            >
-              <Text style={styles.accountActionText}>Sign out</Text>
-            </Pressable>
-          </>
-        ) : (
-          <>
-            <Text style={styles.accountName}>Sign in to sync your bag</Text>
-            <Pressable
-              onPress={() => router.push('/sign-in')}
-              accessibilityRole="button"
-              style={styles.accountAction}
-            >
-              <Text style={styles.accountActionText}>Sign in</Text>
-            </Pressable>
-          </>
         )}
       </View>
 
@@ -271,22 +218,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.14,
     textTransform: 'uppercase',
   },
-  heroSecondary: {
-    borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.charcoal,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroSecondaryText: {
-    fontFamily: fonts.sansMedium,
-    fontSize: 12,
-    color: colors.ink,
-    letterSpacing: 0.14,
-    textTransform: 'uppercase',
-  },
   section: {
     marginTop: spacing.xxxl,
     gap: spacing.lg,
@@ -324,32 +255,6 @@ const styles = StyleSheet.create({
     /** Leading padding lives here so the first card is not flush to the edge. */
     paddingHorizontal: spacing.xl,
     gap: spacing.lg,
-  },
-  account: {
-    marginTop: spacing.xxl,
-    marginHorizontal: spacing.xl,
-    padding: spacing.lg,
-    borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    backgroundColor: '#fbf8f2',
-    gap: spacing.sm,
-  },
-  accountName: {
-    fontFamily: fonts.sans,
-    fontSize: 14,
-    color: colors.ink,
-  },
-  accountAction: {
-    alignSelf: 'flex-start',
-    paddingVertical: spacing.xs,
-  },
-  accountActionText: {
-    fontFamily: fonts.sansMedium,
-    fontSize: 12,
-    color: colors.burntOrange,
-    letterSpacing: 0.14,
-    textTransform: 'uppercase',
   },
   footnote: {
     marginTop: spacing.xxl,

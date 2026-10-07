@@ -87,10 +87,18 @@ export default function RootLayout() {
           animation: 'fade',
         }}
       >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="shop" />
+        {/*
+         * The tabbed part of the app. Its own layout (src/app/(tabs)/_layout.tsx)
+         * draws the bottom bar; naming it here is what puts it inside this stack.
+         */}
+        <Stack.Screen name="(tabs)" />
+
+        {/*
+         * Screens that cover the whole screen instead of living inside a tab —
+         * the same split the website makes. Checkout and product pages should
+         * not have a tab bar under them.
+         */}
         <Stack.Screen name="product/[slug]" />
-        <Stack.Screen name="cart" />
         <Stack.Screen name="checkout" />
         <Stack.Screen name="sign-in" />
         <Stack.Screen name="create-account" />
