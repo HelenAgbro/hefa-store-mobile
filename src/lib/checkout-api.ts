@@ -34,6 +34,7 @@
 import { apiFetch } from '@/lib/api';
 import type { CartItem } from '@/lib/cart-api';
 import type { CheckoutValues } from '@/lib/checkout';
+import type { Order } from '@/lib/types';
 
 /**
  * The deep link Paystack returns to after payment.
@@ -88,6 +89,12 @@ export interface OrderStatus {
   status: string;
   /** A customer-readable note, when the server has one (e.g. a mismatch). */
   message?: string;
+  /**
+   * The full order, when the server has one to hand back (paid or processing).
+   * The confirmation screen renders this as a receipt — the app never builds
+   * its own copy of an order, it only shows what the server returns.
+   */
+  order?: Order;
 }
 
 /**

@@ -30,6 +30,9 @@ interface FieldProps {
   autoCapitalize?: 'none' | 'words' | 'sentences';
   autoComplete?: 'email' | 'password' | 'name' | 'off';
   editable?: boolean;
+  /** Turns the input into a taller, wrapping box (used for the contact message). */
+  multiline?: boolean;
+  numberOfLines?: number;
 }
 
 export function Field({
@@ -42,6 +45,8 @@ export function Field({
   autoCapitalize = 'sentences',
   autoComplete = 'off',
   editable = true,
+  multiline = false,
+  numberOfLines = 4,
 }: FieldProps) {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -59,6 +64,8 @@ export function Field({
         autoCapitalize={autoCapitalize}
         autoComplete={autoComplete}
         editable={editable}
+        multiline={multiline}
+        numberOfLines={multiline ? numberOfLines : undefined}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         /**
@@ -73,6 +80,7 @@ export function Field({
           // customer can see which field they are in without reading the label.
           isFocused && styles.inputFocused,
           !editable && styles.inputDisabled,
+          multiline && styles.inputMultiline,
         ]}
       />
     </View>
@@ -241,6 +249,10 @@ const styles = StyleSheet.create({
   },
   inputDisabled: {
     opacity: 0.5,
+  },
+  inputMultiline: {
+    minHeight: 120,
+    textAlignVertical: 'top',
   },
   button: {
     backgroundColor: colors.ink,

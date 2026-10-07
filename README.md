@@ -33,19 +33,26 @@ As you edit files, the app updates on your phone automatically.
 src/
   app/              screens — the file name is the URL
     _layout.tsx       root: loads fonts, wraps every screen
-    index.tsx         the home screen
+    (tabs)/           the tabbed part: index (home), shop, cart, account
+    product/[slug]    one product
+    checkout / order-confirmation
+    faq / shipping-returns / contact / lookbook / about
   components/       reusable UI
     ProductCard.tsx   one product in a grid
+    home/             the home-screen sections
   lib/              data and helpers
     products.ts       the catalogue — Supabase with an offline fallback
-    data/products.ts  the offline copy
+    data/             offline catalogue plus FAQ, lookbook and category content
     supabase.ts       the database connection
     productImages.ts  maps database photo paths to bundled image files
+    editorialImages.ts  the same, for lookbook and category photos
+    shop.ts           filtering and sorting rules
     types.ts          shared data shapes
     format.ts         money formatting
   theme.ts          ALL colours, fonts and spacing live here
 assets/
   products/         product photography
+  editorial/        lookbook and category photography
 .env.local          database credentials (git-ignored)
 ```
 
@@ -87,10 +94,15 @@ means editing one file rather than hunting through every screen.
 - [x] Project scaffold and Android dev setup
 - [x] HEFA brand theme (colours, fonts, spacing)
 - [x] Product catalogue — reads the live Supabase database, with an offline copy as a fallback
-- [x] Home screen — brand hero + Featured products
-- [ ] Shop and product screens
-- [ ] Cart
-- [ ] Account and sign-in
+- [x] Home screen — announcement bar, hero, Shop Pants band, category grid, Featured products, brand story, lookbook preview, newsletter, help links
+- [x] Shop — category, size and colour filters plus sort, from the same rules as the website
+- [x] Product screen — swipeable photo gallery, size guide, related products, Add to Bag
+- [x] Cart — guest bag on the device, merged into the server cart on sign-in
+- [x] Checkout — server-priced, paid through Paystack in an in-app browser
+- [x] Order confirmation — the full receipt, for guests and signed-in customers
+- [x] Account — sign-in, orders, addresses, settings
+- [x] Content pages — Lookbook, About, FAQ, Shipping &amp; Returns, Contact
+
 
 ## Where the products come from
 

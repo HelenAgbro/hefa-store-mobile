@@ -42,6 +42,18 @@ export interface Category {
   description: string;
   /** Hex stand-in, used only when no photograph is available. */
   swatch: string;
+  /** Editorial photograph for the category card, as stored in the database. */
+  image?: string;
+}
+
+/** A single entry in the lookbook — a campaign photograph with its caption. */
+export interface LookbookEntry {
+  id: string;
+  title: string;
+  caption: string;
+  swatch: string;
+  /** Photo path as stored in the database. Falls back to the swatch when absent. */
+  image?: string;
 }
 
 /**

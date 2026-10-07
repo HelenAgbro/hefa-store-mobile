@@ -100,8 +100,16 @@ export default function RootLayout() {
          */}
         <Stack.Screen name="product/[slug]" />
         <Stack.Screen name="checkout" />
+        <Stack.Screen name="order-confirmation" />
         <Stack.Screen name="sign-in" />
         <Stack.Screen name="create-account" />
+
+        {/* Policy and help screens, reachable from the home screen and account. */}
+        <Stack.Screen name="faq" />
+        <Stack.Screen name="shipping-returns" />
+        <Stack.Screen name="contact" />
+        <Stack.Screen name="lookbook" />
+        <Stack.Screen name="about" />
       </Stack>
       </CartProvider>
     </AuthProvider>

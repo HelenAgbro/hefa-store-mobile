@@ -24,7 +24,7 @@ import {
   type CheckoutErrors,
   type CheckoutValues,
 } from '@/lib/checkout';
-import { confirmOrder, startCheckout, type OrderStatus } from '@/lib/checkout-api';
+import { startCheckout } from '@/lib/checkout-api';
 import { formatNaira } from '@/lib/format';
 import { colors, fonts, radii, spacing } from '@/theme';
 
@@ -92,14 +92,12 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, accessToken } = useAuth();
-  const { items, totalItems, subtotal, clear } = useCart();
+  const { items, totalItems, subtotal } = useCart();
 
   const [values, setValues] = useState<CheckoutValues>(INITIAL_CHECKOUT_VALUES);
   const [fieldErrors, setFieldErrors] = useState<CheckoutErrors>({});
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [result, setResult] = useState<OrderStatus | null>(null);
-  const [reference, setReference] = useState<string | null>(null);
 
   const shipping = getShippingCost(values.shippingMethod, subtotal);
   const total = subtotal + shipping;
@@ -110,7 +108,6 @@ export default function CheckoutScreen() {
 
   async function handlePay() {
     setError(null);
-    setResult(null);
 
     // Catch obvious mistakes before a round trip. The server checks again.
     const errors = validateCheckout(values);
@@ -129,25 +126,22 @@ export default function CheckoutScreen() {
     try {
       // 1. The server prices the order and asks Paystack for a payment URL.
       const started = await startCheckout({ values, items, accessToken });
-      setReference(started.reference);
-
       // 2. Send the customer to pay. openAuthSessionAsync returns when the
       //    in-app browser closes — whether they paid, cancelled, or just tapped
-      //    Done. We do not trust that signal; we ask the server next.
+      //    Done. We do not trust that signal; the confirmation screen asks the
+      //    server next.
       const session = await WebBrowser.openAuthSessionAsync(started.authorizationUrl, REDIRECT_URL);
 
-      // 3. Confirm with the server, which re-checks Paystack itself. A deep
-      //    link back carries its own reference; fall back to the one we hold.
+      // 3. Hand off to the confirmation screen with the reference and token.
+      //    A deep link back carries its own reference; fall back to the one we
+      //    hold. That screen confirms with the server and clears a paid bag.
       const callbackReference =
         (session.type === 'success' ? readParam(session.url, 'reference') : null) ?? started.reference;
 
-      const status = await confirmOrder(callbackReference, started.token);
-      setResult(status);
-
-      // 4. A paid order empties the bag, exactly as the website does.
-      if (status.status === 'paid') {
-        await clear();
-      }
+      router.replace({
+        pathname: '/order-confirmation',
+        params: { reference: callbackReference, token: started.token },
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'We could not start checkout. Please try again.');
     } finally {
@@ -155,43 +149,6 @@ export default function CheckoutScreen() {
     }
   }
 
-
-  // ---- Result view ---------------------------------------------------------
-  if (result) {
-    const paid = result.status === 'paid';
-    const pending = result.status === 'success';
-    const heading = paid
-      ? 'Payment received'
-      : pending
-        ? 'Payment processing'
-        : 'Payment not completed';
-    const body = paid
-      ? `Thank you. Your order ${reference ?? ''} is confirmed and we will be in touch by email.`
-      : pending
-        ? `Your order ${reference ?? ''} is being confirmed. We will email you shortly.`
-        : result.message ??
-          `Your order ${reference ?? ''} was not paid. Your bag is untouched — you can try again.`;
-
-    return (
-      <View
-        style={[
-          styles.screen,
-          { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl },
-        ]}
-      >
-        <View style={styles.resultBox}>
-          <Text style={styles.resultHeading}>{heading}</Text>
-          <Text style={styles.resultBody}>{body}</Text>
-        </View>
-        <View style={styles.resultActions}>
-          {!paid && !pending ? (
-            <Button label="Try again" onPress={() => setResult(null)} />
-          ) : null}
-          <Button label="Back to shop" variant="secondary" onPress={() => router.replace('/shop')} />
-        </View>
-      </View>
-    );
-  }
 
   // ---- Empty bag -----------------------------------------------------------
   if (items.length === 0) {

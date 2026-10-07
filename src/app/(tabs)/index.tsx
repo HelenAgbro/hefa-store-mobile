@@ -9,8 +9,13 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AnnouncementBar } from '@/components/home/AnnouncementBar';
+import { BrandStory } from '@/components/home/BrandStory';
+import { CategoryGrid } from '@/components/home/CategoryGrid';
+import { LookbookPreview } from '@/components/home/LookbookPreview';
+import { Newsletter } from '@/components/home/Newsletter';
+import { ShopPantsCta } from '@/components/home/ShopPantsCta';
 import { ProductCard } from '@/components/ProductCard';
 import { getFeaturedProducts, isUsingDatabase } from '@/lib/products';
 import type { Product } from '@/lib/types';
@@ -22,8 +27,16 @@ import { colors, fonts, radii, spacing } from '@/theme';
  * The brand hero, followed by the products the studio has flagged as featured
  * in the database — the same ones the website's homepage shows.
  */
+/** Help and policy links shown at the foot of the home screen. */
+const HELP_LINKS = [
+  { label: 'Lookbook', href: '/lookbook' },
+  { label: 'About HEFA', href: '/about' },
+  { label: 'FAQ', href: '/faq' },
+  { label: 'Shipping & Returns', href: '/shipping-returns' },
+  { label: 'Contact', href: '/contact' },
+] as const;
+
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const router = useRouter();
 
@@ -72,11 +85,10 @@ export default function HomeScreen() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={[
-        styles.content,
-        { paddingTop: insets.top + spacing.xl },
-      ]}
+      contentContainerStyle={styles.content}
     >
+      <AnnouncementBar />
+
       <View style={styles.header}>
         <Text style={styles.wordmark}>HEFA</Text>
         <Text style={styles.tagline}>Modern Nigerian tailoring</Text>
@@ -96,8 +108,18 @@ export default function HomeScreen() {
           >
             <Text style={styles.heroPrimaryText}>Shop the collection</Text>
           </Pressable>
+          <Pressable
+            onPress={() => router.push('/lookbook')}
+            accessibilityRole="button"
+            style={styles.heroSecondary}
+          >
+            <Text style={styles.heroSecondaryText}>View lookbook</Text>
+          </Pressable>
         </View>
       </View>
+
+      <ShopPantsCta />
+      <CategoryGrid />
 
       <View style={styles.section}>
         <View style={styles.sectionHeading}>
@@ -134,6 +156,25 @@ export default function HomeScreen() {
         )}
       </View>
 
+      <BrandStory />
+      <LookbookPreview />
+      <Newsletter />
+
+      <View style={styles.help}>
+        <Text style={styles.helpTitle}>Help &amp; info</Text>
+        {HELP_LINKS.map((link) => (
+          <Pressable
+            key={link.href}
+            onPress={() => router.push(link.href)}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.helpLink, pressed && styles.helpLinkPressed]}
+          >
+            <Text style={styles.helpLinkLabel}>{link.label}</Text>
+            <Text style={styles.helpChevron}>›</Text>
+          </Pressable>
+        ))}
+      </View>
+
       <Text style={styles.footnote}>
         {isUsingDatabase()
           ? 'Catalogue: live from Supabase'
@@ -155,6 +196,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
   },
   wordmark: {
     fontFamily: fonts.serif,
@@ -218,6 +260,22 @@ const styles = StyleSheet.create({
     letterSpacing: 0.14,
     textTransform: 'uppercase',
   },
+  heroSecondary: {
+    borderRadius: radii.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.charcoal,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroSecondaryText: {
+    fontFamily: fonts.sansMedium,
+    fontSize: 12,
+    color: colors.ink,
+    letterSpacing: 0.14,
+    textTransform: 'uppercase',
+  },
   section: {
     marginTop: spacing.xxxl,
     gap: spacing.lg,
@@ -256,6 +314,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     gap: spacing.lg,
   },
+  help: {
+    marginTop: spacing.xxl,
+    paddingHorizontal: spacing.xl,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  helpTitle: {
+    fontFamily: fonts.sansMedium,
+    fontSize: 10,
+    color: colors.muted,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    paddingTop: spacing.lg,
+  },
+  helpLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  helpLinkPressed: { opacity: 0.6 },
+  helpLinkLabel: { fontFamily: fonts.sansMedium, fontSize: 15, color: colors.ink },
+  helpChevron: { fontFamily: fonts.sans, fontSize: 22, color: colors.muted },
   footnote: {
     marginTop: spacing.xxl,
     paddingHorizontal: spacing.xl,

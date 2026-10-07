@@ -2,13 +2,15 @@
  * One product: gallery, options, and Add to Bag.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, ErrorNotice } from '@/components/Form';
+import { SizeGuide } from '@/components/SizeGuide';
+import { ProductCard } from '@/components/ProductCard';
 import { useCart } from '@/context/CartContext';
 import { formatNaira } from '@/lib/format';
-import { getProductBySlug } from '@/lib/products';
+import { getAllProducts, getProductBySlug } from '@/lib/products';
 import { getProductImageSources } from '@/lib/productImages';
 import type { Product } from '@/lib/types';
 import { colors, fonts, radii, spacing } from '@/theme';
@@ -23,6 +25,12 @@ export default function ProductScreen() {
   const [qty, setQty] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
+  const [activePhoto, setActivePhoto] = useState(0);
+  const [related, setRelated] = useState<Product[]>([]);
+  const { width: screenWidth } = useWindowDimensions();
+  /** The gallery sits inside 24px page margins, so a page is the screen minus both. */
+  const galleryWidth = screenWidth - 48;
+  const relatedCardWidth = Math.round(screenWidth * 0.5);
   useEffect(() => {
     let cancelled = false;
     getProductBySlug(slug ?? '').then((found) => {
@@ -33,6 +41,22 @@ export default function ProductScreen() {
     }).catch(() => { if (!cancelled) setProduct(null); });
     return () => { cancelled = true; };
   }, [slug]);
+  /** "You may also like": same-category pieces, minus the one being viewed. */
+  useEffect(() => {
+    if (!product) return;
+    let cancelled = false;
+    getAllProducts()
+      .then((all) => {
+        if (cancelled) return;
+        setRelated(
+          all
+            .filter((item) => item.category === product.category && item.id !== product.id)
+            .slice(0, 4),
+        );
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [product]);
   const photos = useMemo(() => (product ? getProductImageSources(product.images) : []), [product]);
   async function handleAdd() {
     if (!product || !color || !size) return;
@@ -60,8 +84,33 @@ export default function ProductScreen() {
         <Text style={styles.backText}>‹ Back</Text>
       </Pressable>
       <View style={[styles.gallery, { backgroundColor: product.swatch }]}>
-        {photos[0] ? (<Image source={photos[0]} style={styles.photo} resizeMode="cover" />) : null}
+        {photos.length > 0 ? (
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(event) => {
+              setActivePhoto(Math.round(event.nativeEvent.contentOffset.x / galleryWidth));
+            }}
+          >
+            {photos.map((photo, index) => (
+              <Image
+                key={index}
+                source={photo}
+                style={[styles.photo, { width: galleryWidth }]}
+                resizeMode="cover"
+              />
+            ))}
+          </ScrollView>
+        ) : null}
         {product.badge ? (<View style={styles.badge}><Text style={styles.badgeText}>{product.badge}</Text></View>) : null}
+        {photos.length > 1 ? (
+          <View style={styles.dots}>
+            {photos.map((_, index) => (
+              <View key={index} style={[styles.dot, index === activePhoto && styles.dotActive]} />
+            ))}
+          </View>
+        ) : null}
       </View>
       <View style={styles.info}>
         <Text style={styles.category}>{product.category}</Text>
@@ -76,7 +125,10 @@ export default function ProductScreen() {
             </Pressable>
           ))}
         </View>
-        <Text style={styles.label}>Size</Text>
+        <View style={styles.sizeHeader}>
+          <Text style={styles.sizeHeaderLabel}>Size</Text>
+          <SizeGuide />
+        </View>
         <View style={styles.options}>
           {product.sizes.map((n) => (
             <Pressable key={n} onPress={() => setSize(n)} style={[styles.option, size === n && styles.optionActive]}>
@@ -98,6 +150,22 @@ export default function ProductScreen() {
             {product.details.map((line) => (<Text key={line} style={styles.detail}>· {line}</Text>))}
           </View>
         ) : null}
+
+        {related.length > 0 ? (
+          <View style={styles.related}>
+            <Text style={styles.relatedTitle}>You may also like</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedRow}>
+              {related.map((item) => (
+                <ProductCard
+                  key={item.id}
+                  product={item}
+                  width={relatedCardWidth}
+                  onPress={() => router.push(`/product/${item.slug}`)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
       </View>
     </ScrollView>
   );
@@ -109,6 +177,9 @@ const styles = StyleSheet.create({
   backText: { fontFamily: fonts.sansMedium, fontSize: 13, color: colors.burntOrange },
   gallery: { marginHorizontal: 24, borderRadius: 8, aspectRatio: 4 / 5, overflow: 'hidden' },
   photo: { width: '100%', height: '100%' },
+  dots: { position: 'absolute', bottom: 12, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
+  dotActive: { backgroundColor: colors.cream },
   badge: { position: 'absolute', top: 8, left: 8, backgroundColor: colors.cream, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
   badgeText: { fontFamily: fonts.sansMedium, fontSize: 10, color: colors.ink, textTransform: 'uppercase' },
   info: { paddingHorizontal: 24, paddingTop: 16 },
@@ -118,6 +189,8 @@ const styles = StyleSheet.create({
   body: { fontFamily: fonts.sans, fontSize: 14, lineHeight: 21, color: colors.charcoal, marginTop: 12 },
   label: { fontFamily: fonts.sansMedium, fontSize: 11, color: colors.charcoal, textTransform: 'uppercase', letterSpacing: 0.16, marginTop: 20 },
   options: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  sizeHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20 },
+  sizeHeaderLabel: { fontFamily: fonts.sansMedium, fontSize: 11, color: colors.charcoal, textTransform: 'uppercase', letterSpacing: 0.16 },
   option: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: colors.border },
   optionActive: { backgroundColor: colors.ink, borderColor: colors.ink },
   optionText: { fontFamily: fonts.sansMedium, fontSize: 13, color: colors.charcoal },
@@ -130,5 +203,8 @@ const styles = StyleSheet.create({
   addedText: { fontFamily: fonts.sansMedium, fontSize: 13, color: colors.burntOrange },
   details: { marginTop: 16 },
   detail: { fontFamily: fonts.sans, fontSize: 13, color: colors.muted, lineHeight: 20 },
+  related: { marginTop: 24 },
+  relatedTitle: { fontFamily: fonts.serif, fontSize: 20, color: colors.ink, marginBottom: 12 },
+  relatedRow: { gap: 16 },
   back: { marginTop: 12 },
 });

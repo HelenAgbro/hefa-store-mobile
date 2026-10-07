@@ -16,6 +16,15 @@ const LINKS = [
   { label: 'Settings', hint: 'Name and contact details', href: '/account/settings' },
 ] as const;
 
+/** Help and policy links, shown to signed-in customers too. */
+const HELP_LINKS = [
+  { label: 'Lookbook', href: '/lookbook' },
+  { label: 'About HEFA', href: '/about' },
+  { label: 'FAQ', href: '/faq' },
+  { label: 'Shipping & Returns', href: '/shipping-returns' },
+  { label: 'Contact', href: '/contact' },
+] as const;
+
 /** Statuses that represent money actually received. */
 const PAID_STATUSES = ['paid', 'processing', 'shipped', 'delivered'];
 
@@ -120,6 +129,22 @@ export default function AccountOverviewScreen() {
               <Text style={styles.linkHint}>
                 {link.href === '/account/addresses' ? `${addresses.length} saved` : link.hint}
               </Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <View style={styles.links}>
+        {HELP_LINKS.map((link) => (
+          <Pressable
+            key={link.href}
+            onPress={() => router.push(link.href)}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.link, pressed && styles.linkPressed]}
+          >
+            <View style={styles.linkText}>
+              <Text style={styles.linkLabel}>{link.label}</Text>
             </View>
             <Text style={styles.chevron}>›</Text>
           </Pressable>
